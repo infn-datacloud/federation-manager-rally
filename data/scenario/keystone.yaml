@@ -1,0 +1,10 @@
+  KeystoneBasic.authenticate_user_and_validate_token:
+    -
+      args: {}
+      runner:
+        type: "constant"
+        times: 4
+        concurrency: 2
+      sla:
+        failure_rate:
+          max: 0

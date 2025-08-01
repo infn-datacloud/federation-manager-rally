@@ -1,0 +1,20 @@
+  NovaFlavors.list_flavors:
+    -
+      args:
+        detailed: True
+      runner:
+        type: "constant"
+        times: 4
+        concurrency: 2
+      sla:
+        failure_rate:
+          max: 0
+  NovaKeypair.create_and_delete_keypair:
+    -
+      runner:
+        type: "constant"
+        times: 4
+        concurrency: 2
+      sla:
+        failure_rate:
+          max: 0

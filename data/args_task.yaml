@@ -1,0 +1,17 @@
+---
+  service_list:
+    - nova
+    - neutron
+    - cinder
+    - glance 
+  use_existing_users: true
+  glance_image_location: "/data/cirros-0.6.1-x86_64-disk.img"
+  image_name: "^(cirros-0.6.1|cirros)$"
+  smoke: true
+  users_amount: 1
+  tenants_amount: 1
+  flavor_name: "tiny"
+  neutron_floating_network: "public"
+  cinder_net_enable: False     
+  cinder_net_id: ""
+  

@@ -1,0 +1,34 @@
+  NeutronNetworks.associate_and_dissociate_floating_ips:
+    -
+      args:
+        floating_network: {{neutron_floating_network}}
+      runner:
+        type: "constant"
+        times: 1
+        concurrency: 1
+      sla:
+        failure_rate:
+          max: 0
+  NeutronSecurityGroup.create_and_delete_security_group_rule:
+    -
+      args:
+        security_group_args: {}
+        security_group_rule_args: {}
+      runner:
+        type: "constant"
+        times: 1
+        concurrency: 1
+      sla:
+        failure_rate:
+          max: 0
+  NeutronSecurityGroup.create_and_delete_security_groups:
+    -
+      args:
+        security_group_create_args: {}
+      runner:
+        type: "constant"
+        times: 1
+        concurrency: 1
+      sla:
+        failure_rate:
+          max: 0

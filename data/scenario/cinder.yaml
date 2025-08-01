@@ -1,0 +1,19 @@
+  CinderVolumes.create_and_delete_volume:
+    -
+      args:
+        size:
+          max: 1
+          min: 1
+      runner:
+        {{ constant_runner(concurrency=min(50, 2*controllers_amount),times=min(100, 33*controllers_amount), is_smoke=smoke) }}
+      sla:
+        {{ no_failures_sla() }}
+  CinderVolumes.create_and_attach_volume:
+    -
+      args:
+        {{ vm_params(image_name,flavor_name,1) }}
+        {{ cinder_network(enable=cinder_net_enable, net_id=cinder_net_id) }}
+      runner:
+        {{ constant_runner(concurrency=min(50, 2*controllers_amount),times=min(30, 10*controllers_amount), is_smoke=smoke) }}
+      sla:
+        {{ no_failures_sla() }}
