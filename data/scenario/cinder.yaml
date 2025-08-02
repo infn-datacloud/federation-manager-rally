@@ -12,7 +12,7 @@
     -
       args:
         {{ vm_params(image_name,flavor_name,1) }}
-        {{ cinder_network(enable=cinder_net_enable, net_id=cinder_net_id) }}
+        {{ cinder_network(net_id=cinder_net_id) }}
       runner:
         {{ constant_runner(concurrency=min(50, 2*controllers_amount),times=min(30, 10*controllers_amount), is_smoke=smoke) }}
       sla:

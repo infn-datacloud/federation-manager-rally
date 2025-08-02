@@ -1,3 +1,19 @@
+{%- macro neutron_networks_associate_and_dissociate_floating_ips(floating_ips_enable, neutron_floating_network) %}
+  {%- if floating_ips_enable %}
+  NeutronNetworks.associate_and_dissociate_floating_ips:
+      -
+        args:
+          floating_network: {{neutron_floating_network}}
+        runner:
+          type: "constant"
+          times: 1
+          concurrency: 1
+        sla:
+          failure_rate:
+            max: 0
+  {%- endif %}        
+{%- endmacro %}
+
 {%- macro cinder_network(enable=False, net_id=none) %}
   {%- if enable %}
         create_vm_params:

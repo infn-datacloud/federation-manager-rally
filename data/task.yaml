@@ -13,7 +13,7 @@
 {%- set tenants_amount = tenants_amount|default(1) %}
 {%- endif %}
 
-{%- from "macro/macro.yaml" import cinder_network, user_context, vm_params, unlimited_volumes, constant_runner, rps_runner, no_failures_sla -%}
+{%- from "macro/macro.yaml" import neutron_networks_associate_and_dissociate_floating_ips, cinder_network, user_context, vm_params, unlimited_volumes, constant_runner, rps_runner, no_failures_sla -%}
 {%- from "macro/macro.yaml" import volumes, unlimited_nova, unlimited_neutron, glance_args, api_versions -%}
 
 ---
