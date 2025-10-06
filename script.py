@@ -47,17 +47,17 @@ def write_args_file(path, flavor_name, public_net, floating_ips_enable, cinder_n
     print(f"Wrote environment specification to {path}")
 
 def main():
-    envFile = './env-test.yaml'
-    argsFile = './data/args_task-test.yaml'
+    envFile = './env_test.yaml'
+    argsFile = './data/args_task_test.yaml'
    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--auth-url', required=True, help='OpenStack Keystone URL')
+    parser.add_argument('--auth_url', required=True, help='OpenStack Keystone URL')
     parser.add_argument('--region', required=True, help='OpenStack region name')
     parser.add_argument('--user', required=True, help='OpenStack user that runs commands')
     parser.add_argument('--password', required=True, help='Password of the user')
     parser.add_argument('--project', required=True, help='Project that the user belongs to')
     parser.add_argument('--flavor_name', default='tiny', help='Name of the favour to use')
-    parser.add_argument('--public-net', default='public', help='Name of the public network')
+    parser.add_argument('--public_net', default='public', help='Name of the public network')
     parser.add_argument('--floating_ips_enable', required=True, help='If floating IPs are enabled')
     parser.add_argument('--cinder_net_id', default=None, help='If floating IPs are enabled')
     args = parser.parse_args()
