@@ -6,17 +6,17 @@ Install poetry and run `script.py` with the parameters regarding the new provide
 curl -sSL https://install.python-poetry.org | python3 -
 poetry install --no-root
 poetry run python script.py 
---auth-url https://test /
+--auth_url https://test /
 --region RegionOne /
 --user username /
 --password pwd /
 --project ops /
 --flavor_name small /
---public-net net /
+--public_net net /
 --floating_ips_enable False /
 --cinder_net_id 123
 ```
-`flavor_name` default value is tiny, `public-net` default valiue is public, `cinder_net_id` default value is None.
+`flavor_name` default value is tiny, `public_net` default value is public, `cinder_net_id` default value is None.
 
 
 
