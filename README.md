@@ -6,6 +6,7 @@ Install poetry and run `script.py` with the parameters regarding the new provide
 curl -sSL https://install.python-poetry.org | python3 -
 poetry install --no-root
 poetry run python script.py 
+--provider_name name /
 --auth_url https://test /
 --region RegionOne /
 --user username /
