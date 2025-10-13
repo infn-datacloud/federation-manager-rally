@@ -76,6 +76,12 @@ class Settings(BaseSettings):
             "It defines the fields in the message sent to kafka",
         ),
     ]
+    RALLY_ARGS_FOLDER: Annotated[
+        str, Field(default="./data/", description="Folder for provider args")
+    ]
+    RALLY_REPORT_FOLDER: Annotated[
+        bool, Field(default="./data/reports/", description="Folder for provider test results")
+    ]
 
     model_config = SettingsConfigDict(env_file=".env") 
 

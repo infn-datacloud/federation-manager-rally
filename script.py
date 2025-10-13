@@ -2,6 +2,7 @@ import subprocess
 import argparse
 import textwrap
 import json
+import os
 from datetime import datetime
 from settings import get_settings
 from kafka_client import create_kafka_producer
@@ -50,8 +51,7 @@ def write_args_file(path, flavor_name, public_net, floating_ips_enable, cinder_n
         f.write(content)
     print(f"Wrote environment specification to {path}")
 
-def collect_data(message, msg_version):
-    report = message.stdout 
+def collect_data(report, msg_version): 
     json_data = json.loads(report)
     str_ts = json_data['info']['generated_at']
     ts = datetime.strptime(str_ts, '%Y-%m-%dT%H:%M:%S')
@@ -82,8 +82,8 @@ def main():
 
     providerName = args.provider_name
     envFile = './env_' + providerName + '.yaml'
-    argsFile = './data/args_task_' + providerName + '.yaml'
-    reportFile = './data/reports/report_' + providerName + '.json'
+    argsFile = os.path.join(settings.RALLY_ARGS_FOLDER, f"args_task_{providerName}.yaml")
+    reportFile = os.path.join(settings.RALLY_REPORT_FOLDER, f"report_{providerName}.json")
 
     # Write env file
     write_env_file(
@@ -127,7 +127,8 @@ def main():
     subprocess.run(['rally', 'env', 'delete', '--env', providerName, '--force'])
 
     # Get the report and convert to json 
-    report_data = collect_data(message, settings.KAFKA_MSG_VERSION)
+    report = message.stdout
+    report_data = collect_data(report, settings.KAFKA_MSG_VERSION)
 
     # Send results to Kafka
     producer = create_kafka_producer(settings=settings)
