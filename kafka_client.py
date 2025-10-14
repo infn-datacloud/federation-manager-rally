@@ -80,6 +80,6 @@ def create_kafka_producer(
     except NoBrokersAvailable as e:
         msg = f"Kakfa Broker not found at given url: {settings.KAFKA_BOOTSTRAP_SERVERS}"
         logger.error(msg)
-    except Exception as e:
+    except ValueError as e:
         msg = f"Failed to create producer: {e.args[0]}"
         logger.error(msg)
