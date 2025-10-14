@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 from settings import get_settings
 from kafka_client import create_kafka_producer
+from logger import get_logger
 
 def write_env_file(path, auth_url, region_name, user, password, project):
     """Writes the OpenStack environment YAML spec to the given path"""
@@ -66,6 +67,7 @@ def collect_data(report, msg_version):
 
 def main():
     settings = get_settings()
+    logger = get_logger(settings)
    
     parser = argparse.ArgumentParser()
     parser.add_argument('--provider_name', required=True, help='Provider name')
@@ -131,11 +133,11 @@ def main():
     report_data = collect_data(report, settings.KAFKA_MSG_VERSION)
 
     # Send results to Kafka
-    producer = create_kafka_producer(settings=settings)
+    producer = create_kafka_producer(settings=settings, logger=logger)
     producer.send(settings.KAFKA_TOPIC, report_data)
     producer.flush()
     producer.close()
-    print(
+    logger.info(
         'Message sent to topic ' + settings.KAFKA_TOPIC + ' of kafka server ' + settings.KAFKA_BOOTSTRAP_SERVERS
     )
 

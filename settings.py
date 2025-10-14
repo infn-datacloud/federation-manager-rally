@@ -1,9 +1,36 @@
 """Module with the configuration parameters."""
 
+import logging
 from typing import Annotated
 from functools import lru_cache
-from pydantic import Field
+from enum import Enum
+from pydantic import BeforeValidator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class LogLevelEnum(int, Enum):
+    """Enumeration of supported logging levels."""
+
+    DEBUG = logging.DEBUG
+    INFO = logging.INFO
+    WARNING = logging.WARNING
+    ERROR = logging.ERROR
+    CRITICAL = logging.CRITICAL
+
+
+def get_level(value: int | str | LogLevelEnum) -> int:
+    """Convert a string, integer, or LogLevelEnum value to a logging level integer.
+
+    Args:
+        value: The log level as a string (case-insensitive), integer, or LogLevelEnum.
+
+    Returns:
+        int: The corresponding logging level integer.
+
+    """
+    if isinstance(value, str):
+        return LogLevelEnum.__getitem__(value.upper())
+    return value
+
 
 class Settings(BaseSettings):
     """Model with the app settings."""
@@ -81,6 +108,11 @@ class Settings(BaseSettings):
     ]
     RALLY_REPORT_FOLDER: Annotated[
         str, Field(default="./data/reports/", description="Folder for provider test results"),
+    ]
+    LOG_LEVEL: Annotated[
+        LogLevelEnum,
+        Field(default=LogLevelEnum.INFO, description="Logs level"),
+        BeforeValidator(get_level),
     ]
 
     model_config = SettingsConfigDict(env_file=".env") 

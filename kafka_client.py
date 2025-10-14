@@ -38,7 +38,7 @@ def add_ssl_parameters(
 
 
 def create_kafka_producer(
-    *, settings: Settings
+    *, settings: Settings, logger: Logger
 ) -> KafkaProducer:
     """Create and configure a KafkaProducer instance based on the provided settings.
 
@@ -49,6 +49,7 @@ def create_kafka_producer(
     Args:
         settings (Settings): Configuration object containing Kafka connection
             and security settings.
+        logger (Logger): Logger instance for logging errors and information.
 
     Returns:
         KafkaProducer: Configured Kafka producer instance.
@@ -70,7 +71,7 @@ def create_kafka_producer(
 
     try:
         if settings.KAFKA_SSL_ENABLE:
-            print("SSL enabled")
+            logger.info("SSL enabled")
             ssl_kwargs = add_ssl_parameters(settings=settings)
             kwargs = {**kwargs, **ssl_kwargs}
 
@@ -78,7 +79,7 @@ def create_kafka_producer(
 
     except NoBrokersAvailable as e:
         msg = f"Kakfa Broker not found at given url: {settings.KAFKA_BOOTSTRAP_SERVERS}"
-        raise ConfigurationError(msg) from e
-    except ValueError as e:
-        msg = e.args[0]
-        raise ConfigurationError(msg) from e
+        logger.error(msg)
+    except Exception as e:
+        msg = f"Failed to create producer: {e.args[0]}"
+        logger.error(msg)
