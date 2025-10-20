@@ -3,10 +3,22 @@ import argparse
 import textwrap
 import json
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from settings import get_settings
 from kafka_client import create_kafka_producer
 from logger import get_logger
+
+type_map = {
+    "GlanceImages.create_and_delete_image": "compute",
+    "GlanceImages.list_images": "compute",
+    "CinderVolumes.create_and_delete_volume": "block-storage",
+    "CinderVolumes.create_and_attach_volume": "block-storage",
+    "NeutronNetworks.associate_and_dissociate_floating_ips": "networking",
+    "NeutronSecurityGroup.create_and_delete_security_group_rule": "networking",
+    "NeutronSecurityGroup.create_and_delete_security_groups": "networking",
+    "NovaFlavors.list_flavors": "compute",
+    "NovaKeypair.create_and_delete_keypair": "compute",
+}
 
 def write_env_file(path, auth_url, region_name, user, password, project):
     """Writes the OpenStack environment YAML spec to the given path"""
@@ -54,15 +66,27 @@ def write_args_file(path, flavor_name, public_net, floating_ips_enable, cinder_n
 
 def collect_data(report, msg_version): 
     json_data = json.loads(report)
-    str_ts = json_data['info']['generated_at']
-    ts = datetime.strptime(str_ts, '%Y-%m-%dT%H:%M:%S')
     record = dict()
-    record['timestamp'] = str_ts
     record['msg_version'] = msg_version
+    record['provider_name'] = json_data['tasks'][0]['env_name']
+    record['provider_type'] = json_data['tasks'][0]['tags'][0]
     record['status'] = json_data['tasks'][0]['status']
-    record['tag'] = json_data['tasks'][0]['tags'][0]
-    record['provider'] = json_data['tasks'][0]['env_name']
-    record['test_result'] = str(json_data['tasks'][0]['pass_sla'])
+    record['success'] = str(json_data['tasks'][0]['pass_sla'])
+    substasks = []
+    for st in json_data['tasks'][0]['subtasks']:
+        wl = st["workloads"][0]
+        subtask_record = {
+            'type': type_map.get(st['title'], 'unknown'),
+            'title': st['title'],
+            'status': st['status'],
+            'success': str(wl['pass_sla']),
+            'elapsed_time': wl['full_duration'],
+            'failed_iteration_count': wl['failed_iteration_count'],
+            'total_iteration_count': wl['total_iteration_count']
+        }
+        substasks.append(subtask_record)
+    record['subtasks'] = substasks
+    record['timestamp'] = datetime.now(UTC).isoformat()    
     return record
 
 def main():
@@ -71,6 +95,7 @@ def main():
    
     parser = argparse.ArgumentParser()
     parser.add_argument('--provider_name', required=True, help='Provider name')
+    parser.add_argument('--provider_type', required=True, help='Provider type')
     parser.add_argument('--auth_url', required=True, help='OpenStack Keystone URL')
     parser.add_argument('--region', required=True, help='OpenStack region name')
     parser.add_argument('--user', required=True, help='OpenStack user that runs commands')
@@ -83,6 +108,7 @@ def main():
     args = parser.parse_args()
 
     providerName = args.provider_name
+    providerType = args.provider_type
     envFile = './env_' + providerName + '.yaml'
     argsFile = os.path.join(settings.RALLY_ARGS_FOLDER, f"args_task_{providerName}.yaml")
     reportFile = os.path.join(settings.RALLY_REPORT_FOLDER, f"report_{providerName}.json")
@@ -113,7 +139,7 @@ def main():
     subprocess.run(['rally', 'env', 'check'])
 
     # Collect key Open Stack metrics
-    subprocess.run(['rally', 'task', 'start', './data/task.yaml', '--task-args-file', argsFile, '--tag', 'test-rally'])
+    subprocess.run(['rally', 'task', 'start', './data/task.yaml', '--task-args-file', argsFile, '--tag', providerType])
     
     # Generate Report
     subprocess.run(['rally', 'task', 'report', '--json', '--out', reportFile])
