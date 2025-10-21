@@ -1,0 +1,18 @@
+  Quotas.nova_get:
+    -
+      runner:
+        type: "constant"
+        times: 4
+        concurrency: 2
+      sla:
+        failure_rate:
+          max: 0
+  Quotas.cinder_get:
+    -
+      runner:
+        type: "constant"
+        times: 4
+        concurrency: 2
+      sla:
+        failure_rate:
+          max: 0

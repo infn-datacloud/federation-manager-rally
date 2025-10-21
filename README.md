@@ -1,12 +1,18 @@
 # federation-manager-rally
 
 Currently poetry project needs python >=3.13.
-Install poetry and run `script.py` with the parameters regarding the new provider:
+Install poetry:
 ```
 curl -sSL https://install.python-poetry.org | python3 -
 poetry install --no-root
+```
+Create a new `src/.env` file, following the `src/.env.example` file.
+Run `script.py` with the parameters regarding the new provider:
+```
+cd src
 poetry run python script.py 
 --provider_name my_name /
+--provider_type openstack /
 --auth_url https://my_url /
 --region RegionOne /
 --user my_username /
