@@ -48,7 +48,7 @@ def write_args_file(path, flavor_name, public_net, floating_ips_enable, cinder_n
         '  - cinder',
         '  - glance', 
         'use_existing_users: true',
-        'glance_image_location: "./data/cirros-0.6.1-x86_64-disk.img"',
+        'glance_image_location: "./rally-data/cirros-0.6.1-x86_64-disk.img"',
         'image_name: "^(cirros-0.6.1|cirros|infn-cloud-mon)$"',
         'smoke: true',
         'users_amount: 1',
@@ -109,7 +109,8 @@ def main():
 
     providerName = args.provider_name
     providerType = args.provider_type
-    envFile = './env_' + providerName + '.yaml'
+    taskFile = os.path.join('./rally-data/', 'task.yaml')
+    envFile = os.path.join(settings.RALLY_ENVS_FOLDER, f"env_{providerName}.yaml")
     argsFile = os.path.join(settings.RALLY_ARGS_FOLDER, f"args_task_{providerName}.yaml")
     reportFile = os.path.join(settings.RALLY_REPORT_FOLDER, f"report_{providerName}.json")
 
@@ -139,7 +140,7 @@ def main():
     subprocess.run(['rally', 'env', 'check'])
 
     # Collect key Open Stack metrics
-    subprocess.run(['rally', 'task', 'start', './data/task.yaml', '--task-args-file', argsFile, '--tag', providerType])
+    subprocess.run(['rally', 'task', 'start', taskFile, '--task-args-file', argsFile, '--tag', providerType])
     
     # Generate Report
     subprocess.run(['rally', 'task', 'report', '--json', '--out', reportFile])
@@ -157,15 +158,17 @@ def main():
     # Get the report and convert to json 
     report = message.stdout
     report_data = collect_data(report, settings.KAFKA_MSG_VERSION)
+    logger.debug(f"Collected report data: {report_data}")
 
     # Send results to Kafka
-    producer = create_kafka_producer(settings=settings, logger=logger)
-    producer.send(settings.KAFKA_TOPIC, report_data)
-    producer.flush()
-    producer.close()
-    logger.info(
-        'Message sent to topic ' + settings.KAFKA_TOPIC + ' of kafka server ' + settings.KAFKA_BOOTSTRAP_SERVERS
-    )
+    if settings.KAFKA_ENABLE:
+        producer = create_kafka_producer(settings=settings, logger=logger)
+        producer.send(settings.KAFKA_TOPIC, report_data)
+        producer.flush()
+        producer.close()
+        logger.info(
+            'Message sent to topic ' + settings.KAFKA_TOPIC + ' of kafka server ' + settings.KAFKA_BOOTSTRAP_SERVERS
+        )
 
 
 if __name__ == '__main__':

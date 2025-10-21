@@ -103,11 +103,14 @@ class Settings(BaseSettings):
             "It defines the fields in the message sent to kafka",
         ),
     ]
+    RALLY_ENVS_FOLDER: Annotated[
+        str, Field(default="./environments/", description="Folder for provider environments"),
+    ]
     RALLY_ARGS_FOLDER: Annotated[
-        str, Field(default="./data/", description="Folder for provider args"),
+        str, Field(default="./args/", description="Folder for provider args"),
     ]
     RALLY_REPORT_FOLDER: Annotated[
-        str, Field(default="./data/reports/", description="Folder for provider test results"),
+        str, Field(default="./reports/", description="Folder for provider test results"),
     ]
     LOG_LEVEL: Annotated[
         LogLevelEnum,

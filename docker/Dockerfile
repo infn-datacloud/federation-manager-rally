@@ -5,7 +5,15 @@ FROM harbor.cloud.infn.it/datacloud-middleware/poetry:${POETRY_VERSION}-python${
 
 WORKDIR /app
 
+ENV RALLY_ENVS_FOLDER=/app/environments
+ENV RALLY_ARGS_FOLDER=/app/args
+ENV RALLY_REPORT_FOLDER=/app/reports
+
 COPY ./pyproject.toml ./poetry.lock ./README.md /app/
 COPY ./src /app/src
+COPY ./rally-data /app/rally-data
 
-RUN poetry install --without dev
+RUN mkdir /app/environments
+RUN mkdir /app/args
+RUN mkdir /app/reports
+RUN poetry install --no-root
