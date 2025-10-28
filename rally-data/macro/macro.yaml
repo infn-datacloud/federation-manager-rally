@@ -14,13 +14,12 @@
   {%- endif %}        
 {%- endmacro %}
 
-{%- macro cinder_network(enable=False, net_id=none) %}
-  {%- if enable %}
+{%- macro cinder_network(net_id=none) %}
+  {%- if net_id %}
         create_vm_params:
           nics:
             - net-id: {{ net_id }}
-  {%- endif %}
-        
+  {%- endif %}        
 {%- endmacro %}
 
 {%- macro user_context(tenants,users_per_tenant, use_existing_users) -%}

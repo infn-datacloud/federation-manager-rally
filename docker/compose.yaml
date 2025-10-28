@@ -1,0 +1,12 @@
+services:
+  fed-mgr-rally:
+    # image: harbor.cloud.infn.it/datacloud-middleware/fed-mgr-rally:PR-1
+    image: fed-mgr-rally
+    container_name: fed-mgr-rally
+    env_file:
+      - ../.env
+    command: sleep infinity    
+    volumes:
+      - ../environments:/app/environments
+      - ../args:/app/args
+      - ../reports:/app/reports
