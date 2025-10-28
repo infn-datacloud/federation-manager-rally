@@ -7,6 +7,7 @@ from enum import Enum
 from pydantic import BeforeValidator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class LogLevelEnum(int, Enum):
     """Enumeration of supported logging levels."""
 
@@ -34,6 +35,7 @@ def get_level(value: int | str | LogLevelEnum) -> int:
 
 class Settings(BaseSettings):
     """Model with the app settings."""
+
     KAFKA_ENABLE: Annotated[
         bool, Field(default=False, description="Enable kafka communication")
     ]
@@ -70,7 +72,8 @@ class Settings(BaseSettings):
     KAFKA_CLIENT_NAME: Annotated[
         str,
         Field(
-            default="fedmgr-rally", description="Client name to use when connecting to kafka"
+            default="fedmgr-rally",
+            description="Client name to use when connecting to kafka",
         ),
     ]
     KAFKA_SSL_ENABLE: Annotated[
@@ -104,13 +107,18 @@ class Settings(BaseSettings):
         ),
     ]
     RALLY_ENVS_FOLDER: Annotated[
-        str, Field(default="./environments/", description="Folder for provider environments"),
+        str,
+        Field(
+            default="./environments/", description="Folder for provider environments"
+        ),
     ]
     RALLY_ARGS_FOLDER: Annotated[
-        str, Field(default="./args/", description="Folder for provider args"),
+        str,
+        Field(default="./args/", description="Folder for provider args"),
     ]
     RALLY_REPORT_FOLDER: Annotated[
-        str, Field(default="./reports/", description="Folder for provider test results"),
+        str,
+        Field(default="./reports/", description="Folder for provider test results"),
     ]
     LOG_LEVEL: Annotated[
         LogLevelEnum,
@@ -118,7 +126,8 @@ class Settings(BaseSettings):
         BeforeValidator(get_level),
     ]
 
-    model_config = SettingsConfigDict(env_file=".env") 
+    model_config = SettingsConfigDict(env_file=".env")
+
 
 @lru_cache
 def get_settings() -> Settings:

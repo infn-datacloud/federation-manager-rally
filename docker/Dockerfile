@@ -16,4 +16,4 @@ COPY ./rally-data /app/rally-data
 RUN mkdir /app/environments
 RUN mkdir /app/args
 RUN mkdir /app/reports
-RUN poetry install --no-root
+RUN poetry install --without dev --no-root

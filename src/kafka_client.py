@@ -36,10 +36,7 @@ def add_ssl_parameters(
     return kwargs
 
 
-
-def create_kafka_producer(
-    *, settings: Settings, logger: Logger
-) -> KafkaProducer:
+def create_kafka_producer(*, settings: Settings, logger: Logger) -> KafkaProducer:
     """Create and configure a KafkaProducer instance based on the provided settings.
 
     This function sets up a Kafka producer with JSON value serialization, idempotence,
@@ -77,7 +74,7 @@ def create_kafka_producer(
 
         return KafkaProducer(**kwargs)
 
-    except NoBrokersAvailable as e:
+    except NoBrokersAvailable:
         msg = f"Kakfa Broker not found at given url: {settings.KAFKA_BOOTSTRAP_SERVERS}"
         logger.error(msg)
     except ValueError as e:
