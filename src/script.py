@@ -94,38 +94,11 @@ def collect_data(report, msg_version):
     return record
 
 
-def main():
+def execute_rally(args):
     settings = get_settings()
     logger = get_logger(settings)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--provider_name", required=True, help="Provider name")
-    parser.add_argument("--provider_type", required=True, help="Provider type")
-    parser.add_argument("--auth_url", required=True, help="OpenStack Keystone URL")
-    parser.add_argument("--region", required=True, help="OpenStack region name")
-    parser.add_argument(
-        "--user", required=True, help="OpenStack user that runs commands"
-    )
-    parser.add_argument("--password", required=True, help="Password of the user")
-    parser.add_argument(
-        "--project", required=True, help="Project that the user belongs to"
-    )
-    parser.add_argument(
-        "--flavor_name", default="tiny", help="Name of the favour to use"
-    )
-    parser.add_argument(
-        "--public_net", default="public", help="Name of the public network"
-    )
-    parser.add_argument(
-        "--floating_ips_enable", required=True, help="If floating IPs are enabled"
-    )
-    parser.add_argument(
-        "--cinder_net_id", default=None, help="If floating IPs are enabled"
-    )
-    args = parser.parse_args()
-
-    providerName = args.provider_name
-    providerType = args.provider_type
+    providerName = args["provider_name"]
+    providerType = args["provider_type"]
     taskFile = os.path.join("./rally-data/", "task.yaml")
     envFile = os.path.join(settings.RALLY_ENVS_FOLDER, f"env_{providerName}.yaml")
     argsFile = os.path.join(
@@ -138,19 +111,19 @@ def main():
     # Write env file
     write_env_file(
         path=envFile,
-        auth_url=args.auth_url,
-        region_name=args.region,
-        user=args.user,
-        password=args.password,
-        project=args.project,
+        auth_url=args["auth_url"],
+        region_name=args["region"],
+        user=args["user"],
+        password=args["password"],
+        project=args["project"],
     )
     # Write args file
     write_args_file(
         path=argsFile,
-        flavor_name=args.flavor_name,
-        public_net=args.public_net,
-        floating_ips_enable=args.floating_ips_enable,
-        cinder_net_id=args.cinder_net_id,
+        flavor_name=args["flavor_name"],
+        public_net=args["public_net"],
+        floating_ips_enable=args["floating_ips_enable"],
+        cinder_net_id=args["cinder_net_id"],
     )
 
     # Create OpenStack Env
@@ -206,6 +179,37 @@ def main():
             + " of kafka server "
             + settings.KAFKA_BOOTSTRAP_SERVERS
         )
+    return report_data
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--provider_name", required=True, help="Provider name")
+    parser.add_argument("--provider_type", required=True, help="Provider type")
+    parser.add_argument("--auth_url", required=True, help="OpenStack Keystone URL")
+    parser.add_argument("--region", required=True, help="OpenStack region name")
+    parser.add_argument(
+        "--user", required=True, help="OpenStack user that runs commands"
+    )
+    parser.add_argument("--password", required=True, help="Password of the user")
+    parser.add_argument(
+        "--project", required=True, help="Project that the user belongs to"
+    )
+    parser.add_argument(
+        "--flavor_name", default="tiny", help="Name of the favour to use"
+    )
+    parser.add_argument(
+        "--public_net", default="public", help="Name of the public network"
+    )
+    parser.add_argument(
+        "--floating_ips_enable", required=True, help="If floating IPs are enabled"
+    )
+    parser.add_argument(
+        "--cinder_net_id", default=None, help="If floating IPs are enabled"
+    )
+    args = parser.parse_args()
+    report_data = execute_rally(vars(args))
+    print(f"Rally execution completed with report data: {report_data}")
 
 
 if __name__ == "__main__":
