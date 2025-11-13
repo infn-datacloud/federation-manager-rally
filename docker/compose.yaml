@@ -1,6 +1,6 @@
 services:
   fed-mgr-rally:
-    image: harbor.cloud.infn.it/datacloud-middleware/fed-mgr-rally:PR-1-python3.13
+    image: harbor.cloud.infn.it/datacloud-middleware/fed-mgr-rally:python3.13
     container_name: fed-mgr-rally
     env_file:
       - ../.env
@@ -11,7 +11,7 @@ services:
       - ../reports:/app/reports
 
   fed-mgr:
-    image: harbor.cloud.infn.it/datacloud-middleware/fed-mgr:PR-20-python3.13
+    image: harbor.cloud.infn.it/datacloud-middleware/fed-mgr:python3.13
     container_name: fed-mgr
     restart: unless-stopped
     depends_on:
@@ -27,8 +27,8 @@ services:
       DB_NAME: fed_mgr
       AUTHN_MODE: local
       TRUSTED_IDP_LIST: '["https://iam.cloud.infn.it/"]'
-      API_KEY: alessandra
-      SECRET_KEY: ale
+      API_KEY: changeit
+      SECRET_KEY: changeit
 
   db:
     image: mysql:8

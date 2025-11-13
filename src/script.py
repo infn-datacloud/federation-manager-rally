@@ -21,7 +21,7 @@ type_map = {
 }
 
 
-def write_env_file(path, auth_url, region_name, user, password, project):
+def write_env_file(logger, path, auth_url, region_name, user, password, project):
     """Writes the OpenStack environment YAML spec to the given path"""
     content = textwrap.dedent(f"""
     ---
@@ -36,11 +36,11 @@ def write_env_file(path, auth_url, region_name, user, password, project):
     """).lstrip()
     with open(path, "w") as f:
         f.write(content)
-    print(f"Wrote environment specification to {path}")
+    logger.info(f"Wrote environment specification to {path}")
 
 
 def write_args_file(
-    path, flavor_name, public_net, floating_ips_enable, cinder_net_id=None
+    logger, path, flavor_name, public_net, floating_ips_enable, cinder_net_id=None
 ):
     """Writes the OpenStack args YAML spec to the given path"""
     lines = [
@@ -65,7 +65,7 @@ def write_args_file(
     content = "\n".join(lines) + "\n"
     with open(path, "w") as f:
         f.write(content)
-    print(f"Wrote environment specification to {path}")
+    logger.info(f"Wrote environment specification to {path}")
 
 
 def collect_data(report, msg_version):
@@ -110,6 +110,7 @@ def execute_rally(args):
 
     # Write env file
     write_env_file(
+        logger=logger,
         path=envFile,
         auth_url=args["auth_url"],
         region_name=args["region"],
@@ -119,6 +120,7 @@ def execute_rally(args):
     )
     # Write args file
     write_args_file(
+        logger=logger,
         path=argsFile,
         flavor_name=args["flavor_name"],
         public_net=args["public_net"],
@@ -183,6 +185,8 @@ def execute_rally(args):
 
 
 def main():
+    settings = get_settings()
+    logger = get_logger(settings)
     parser = argparse.ArgumentParser()
     parser.add_argument("--provider_name", required=True, help="Provider name")
     parser.add_argument("--provider_type", required=True, help="Provider type")
@@ -209,7 +213,7 @@ def main():
     )
     args = parser.parse_args()
     report_data = execute_rally(vars(args))
-    print(f"Rally execution completed with report data: {report_data}")
+    logger.info(f"Rally execution completed with report data: {report_data}")
 
 
 if __name__ == "__main__":

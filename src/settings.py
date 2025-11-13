@@ -125,6 +125,51 @@ class Settings(BaseSettings):
         Field(default=LogLevelEnum.INFO, description="Logs level"),
         BeforeValidator(get_level),
     ]
+    FED_MGR_API_URL: Annotated[
+        str,
+        Field(
+            default="http://localhost:8000/api/v1/",
+            description="Rest API URL of the Federation Manager",
+        ),
+    ]
+    X_API_KEY: Annotated[
+        str,
+        Field(
+            default="",
+            description="API Key to access the Federation Manager API",
+        ),
+    ]
+    API_SIZE: Annotated[
+        int,
+        Field(
+            default=5,
+            description="Number of items to retrieve per page when calling the "
+            "Federation Manager API",
+        ),
+    ]
+    API_PAGE: Annotated[
+        int,
+        Field(
+            default=1,
+            description="Page number to retrieve when calling the Federation Manager "
+            "API",
+        ),
+    ]
+    API_TIMEOUT: Annotated[
+        int,
+        Field(
+            default=15,
+            ge=1,
+            description="Timeout in seconds for Federation Manager API calls",
+        ),
+    ]
+    REQUESTED_PROVIDER_STATUS: Annotated[
+        list[int],
+        Field(
+            default=[3, 4, 5, 6, 8, 9, 10],
+            description="List of provider status codes allowed to run the tests",
+        ),
+    ]
 
     model_config = SettingsConfigDict(env_file=".env")
 
