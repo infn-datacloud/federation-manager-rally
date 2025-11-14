@@ -95,21 +95,21 @@ def collect_data(report, msg_version):
 
 def execute_rally(args, settings, logger):
     logger.info(f"Starting rally execution for provider {args['provider_name']}")
-    providerName = args["provider_name"]
-    providerType = args["provider_type"]
-    taskFile = os.path.join("./rally-data/", "task.yaml")
-    envFile = os.path.join(settings.RALLY_ENVS_FOLDER, f"env_{providerName}.yaml")
-    argsFile = os.path.join(
-        settings.RALLY_ARGS_FOLDER, f"args_task_{providerName}.yaml"
+    provider_name = args["provider_name"]
+    provider_type = args["provider_type"]
+    task_file = os.path.join("./rally-data/", "task.yaml")
+    env_file = os.path.join(settings.RALLY_ENVS_FOLDER, f"env_{provider_name}.yaml")
+    args_file = os.path.join(
+        settings.RALLY_ARGS_FOLDER, f"args_task_{provider_name}.yaml"
     )
-    reportFile = os.path.join(
-        settings.RALLY_REPORT_FOLDER, f"report_{providerName}.json"
+    report_file = os.path.join(
+        settings.RALLY_REPORT_FOLDER, f"report_{provider_name}.json"
     )
 
     # Write env file
     write_env_file(
         logger=logger,
-        path=envFile,
+        path=env_file,
         auth_url=args["auth_url"],
         region_name=args["region"],
         user=args["user"],
@@ -119,7 +119,7 @@ def execute_rally(args, settings, logger):
     # Write args file
     write_args_file(
         logger=logger,
-        path=argsFile,
+        path=args_file,
         flavor_name=args["flavor_name"],
         public_net=args["public_net"],
         floating_ips_enable=args["floating_ips_enable"],
@@ -129,7 +129,7 @@ def execute_rally(args, settings, logger):
     # Create OpenStack Env
     subprocess.run(["rally", "db", "create"])
     subprocess.run(
-        ["rally", "env", "create", "--name", providerName, "--spec", envFile]
+        ["rally", "env", "create", "--name", provider_name, "--spec", env_file]
     )
 
     # Check that you provide correct credentials
@@ -141,16 +141,16 @@ def execute_rally(args, settings, logger):
             "rally",
             "task",
             "start",
-            taskFile,
+            task_file,
             "--task-args-file",
-            argsFile,
+            args_file,
             "--tag",
-            providerType,
+            provider_type,
         ]
     )
 
     # Generate Report
-    subprocess.run(["rally", "task", "report", "--json", "--out", reportFile])
+    subprocess.run(["rally", "task", "report", "--json", "--out", report_file])
     message = subprocess.run(
         ["rally", "task", "report", "--json"],
         capture_output=True,
@@ -159,8 +159,8 @@ def execute_rally(args, settings, logger):
     )
 
     # Delete Env
-    subprocess.run(["rally", "env", "destroy", "--env", providerName])
-    subprocess.run(["rally", "env", "delete", "--env", providerName, "--force"])
+    subprocess.run(["rally", "env", "destroy", "--env", provider_name])
+    subprocess.run(["rally", "env", "delete", "--env", provider_name, "--force"])
 
     # Get the report and convert to json
     report = message.stdout
