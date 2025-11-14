@@ -93,9 +93,8 @@ def collect_data(report, msg_version):
     return record
 
 
-def execute_rally(args):
-    settings = get_settings()
-    logger = get_logger(settings)
+def execute_rally(args, settings, logger):
+    logger.info(f"Starting rally execution for provider {args['provider_name']}")
     providerName = args["provider_name"]
     providerType = args["provider_type"]
     taskFile = os.path.join("./rally-data/", "task.yaml")
@@ -211,7 +210,7 @@ def main():
         "--cinder_net_id", default=None, help="If floating IPs are enabled"
     )
     args = parser.parse_args()
-    report_data = execute_rally(vars(args))
+    report_data = execute_rally(vars(args), settings=settings, logger=logger)
     logger.info(f"Rally execution completed with report data: {report_data}")
 
 
