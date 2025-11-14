@@ -18,6 +18,17 @@ def get_regions(url, headers, params, timeout, provider_id):
     return res.json()["data"]
 
 
+def get_region_overrides(
+    url, headers, params, timeout, provider_id, project_id, region_id
+):
+    url = f"{url}providers/{provider_id}/projects/{project_id}/regions/{region_id}"
+    res = requests.get(url, headers=headers, params=params, timeout=timeout)
+    if res.status_code == 404:
+        return {}
+    res.raise_for_status()
+    return res.json()["overrides"]
+
+
 def get_project(url, headers, params, timeout, provider_id):
     url = f"{url}providers/{provider_id}/projects/"
     res = requests.get(
@@ -27,9 +38,8 @@ def get_project(url, headers, params, timeout, provider_id):
     return res.json()["data"][0]["name"]
 
 
-def decrypt(password):
-    # Placeholder for decryption logic
-    return password
+def decrypt(password, fernet):
+    return fernet.decrypt(password.encode()).decode()
 
 
 def run_script(settings, logger):
@@ -43,10 +53,19 @@ def run_script(settings, logger):
     timeout = settings.API_TIMEOUT
     providers = get_providers(url, headers, params, timeout)
     for provider in providers:
-        if provider["status"] in settings.REQUESTED_PROVIDER_STATUS:
+        if provider["status_name"] in settings.REQUESTED_PROVIDER_STATUS:
             project = get_project(url, headers, params, timeout, provider["id"])
             regions = get_regions(url, headers, params, timeout, provider["id"])
             for region in regions:
+                overrides = get_region_overrides(
+                    url,
+                    headers,
+                    params,
+                    timeout,
+                    provider["id"],
+                    project["id"],
+                    region["id"],
+                )
                 success = False
                 report_data = execute_rally(
                     args={
@@ -55,22 +74,16 @@ def run_script(settings, logger):
                         "auth_url": provider["auth_endpoint"],
                         "region": region["name"],
                         "user": provider["rally_username"],
-                        "password": decrypt(provider["rally_password"]),
+                        "password": decrypt(
+                            provider["rally_password"], settings.SECRET_KEY
+                        ),
                         "project": project["iaas_project_id"],
-                        "flavor_name": provider["image_tags"][0]
-                        if provider.get("image_tags")
-                        else "tiny",
-                        "public_net": provider["public_net"][0]
-                        if provider.get("public_net")
-                        else "public",
-                        "floating_ips_enable": "true"
-                        if provider.get("is_public")
-                        else "false",
-                        "cinder_net_id": provider["network_tags"][0]
-                        if provider.get("network_tags")
-                        and len(provider["network_tags"]) > 0
-                        and provider["network_tags"][0] is not None
-                        else None,
+                        "flavor_name": provider["test_flavor_name"],
+                        "public_net": overrides.get("default_public_net", "public"),
+                        "floating_ips_enable": provider.get(
+                            "floating_ips_enable", False
+                        ),
+                        "cinder_net_id": provider["test_network_id"],
                     }
                 )
                 status = report_data.get("status")
