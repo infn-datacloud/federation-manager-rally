@@ -6,11 +6,11 @@ Install poetry:
 curl -sSL https://install.python-poetry.org | python3 -
 poetry install --no-root
 ```
-Create a new `src/.env` file, following the `src/.env.example` file.
-Run `script.py` with the parameters regarding the new provider:
+Create a new `.env` file, following the `.env.example` file.
+Run `src/script.py` with the parameters regarding the new provider:
 ```
-cd src
-poetry run python script.py 
+poetry env activate
+poetry run python src/script.py 
 --provider_name my_name /
 --provider_type openstack /
 --auth_url https://my_url /
@@ -30,5 +30,10 @@ The variable `flavor_name` defines the flavor of the VMs to test; its default va
 The variable `public_net` indicates the public network of the provider and the variable `floating_ips_enable` can be set to True to test floating IP association and dissociation on the specified public network; if False, floating IP operations are not tested. The default value of `public_net` is public.
 If you want to test volume creation and attachment and you have more than one network, set `cinder_net_id` to the ID of the network that the volume should be connected to. That network must include a subnet so instances can boot. The default value of `cinder_net_id` is None.
 
-
-
+Run `src/main.py` 
+```
+docker build -t fed-mgr-rally -f docker/Dockerfile .
+docker compose -f docker/compose.yaml up -d
+poetry env activate
+poetry run python src/main.py
+```
