@@ -21,7 +21,7 @@ type_map = {
 }
 
 
-def write_env_file(path, auth_url, region_name, user, password, project):
+def write_env_file(logger, path, auth_url, region_name, user, password, project):
     """Writes the OpenStack environment YAML spec to the given path"""
     content = textwrap.dedent(f"""
     ---
@@ -36,11 +36,10 @@ def write_env_file(path, auth_url, region_name, user, password, project):
     """).lstrip()
     with open(path, "w") as f:
         f.write(content)
-    print(f"Wrote environment specification to {path}")
 
 
 def write_args_file(
-    path, flavor_name, public_net, floating_ips_enable, cinder_net_id=None
+    logger, path, flavor_name, public_net, floating_ips_enable, cinder_net_id=None
 ):
     """Writes the OpenStack args YAML spec to the given path"""
     lines = [
@@ -65,7 +64,7 @@ def write_args_file(
     content = "\n".join(lines) + "\n"
     with open(path, "w") as f:
         f.write(content)
-    print(f"Wrote environment specification to {path}")
+    logger.debug(f"Wrote environment specification to {path}")
 
 
 def collect_data(report, msg_version):
@@ -94,10 +93,98 @@ def collect_data(report, msg_version):
     return record
 
 
+def execute_rally(args, settings, logger):
+    logger.info(f"Starting rally execution for provider {args['provider_name']}")
+    provider_name = args["provider_name"]
+    provider_type = args["provider_type"]
+    task_file = os.path.join("./rally-data/", "task.yaml")
+    env_file = os.path.join(settings.RALLY_ENVS_FOLDER, f"env_{provider_name}.yaml")
+    args_file = os.path.join(
+        settings.RALLY_ARGS_FOLDER, f"args_task_{provider_name}.yaml"
+    )
+    report_file = os.path.join(
+        settings.RALLY_REPORT_FOLDER, f"report_{provider_name}.json"
+    )
+
+    # Write env file
+    write_env_file(
+        logger=logger,
+        path=env_file,
+        auth_url=args["auth_url"],
+        region_name=args["region"],
+        user=args["user"],
+        password=args["password"],
+        project=args["project"],
+    )
+    # Write args file
+    write_args_file(
+        logger=logger,
+        path=args_file,
+        flavor_name=args["flavor_name"],
+        public_net=args["public_net"],
+        floating_ips_enable=args["floating_ips_enable"],
+        cinder_net_id=args["cinder_net_id"],
+    )
+
+    # Create OpenStack Env
+    subprocess.run(["rally", "db", "create"])
+    subprocess.run(
+        ["rally", "env", "create", "--name", provider_name, "--spec", env_file]
+    )
+
+    # Check that you provide correct credentials
+    subprocess.run(["rally", "env", "check"])
+
+    # Collect key Open Stack metrics
+    subprocess.run(
+        [
+            "rally",
+            "task",
+            "start",
+            task_file,
+            "--task-args-file",
+            args_file,
+            "--tag",
+            provider_type,
+        ]
+    )
+
+    # Generate Report
+    subprocess.run(["rally", "task", "report", "--json", "--out", report_file])
+    message = subprocess.run(
+        ["rally", "task", "report", "--json"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    # Delete Env
+    subprocess.run(["rally", "env", "destroy", "--env", provider_name])
+    subprocess.run(["rally", "env", "delete", "--env", provider_name, "--force"])
+
+    # Get the report and convert to json
+    report = message.stdout
+    report_data = collect_data(report, settings.KAFKA_MSG_VERSION)
+    logger.debug(f"Collected report data: {report_data}")
+
+    # Send results to Kafka
+    if settings.KAFKA_ENABLE:
+        producer = create_kafka_producer(settings=settings, logger=logger)
+        producer.send(settings.KAFKA_TOPIC, report_data)
+        producer.flush()
+        producer.close()
+        logger.info(
+            "Message sent to topic "
+            + settings.KAFKA_TOPIC
+            + " of kafka server "
+            + settings.KAFKA_BOOTSTRAP_SERVERS
+        )
+    return report_data
+
+
 def main():
     settings = get_settings()
     logger = get_logger(settings)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--provider_name", required=True, help="Provider name")
     parser.add_argument("--provider_type", required=True, help="Provider type")
@@ -123,89 +210,8 @@ def main():
         "--cinder_net_id", default=None, help="If floating IPs are enabled"
     )
     args = parser.parse_args()
-
-    providerName = args.provider_name
-    providerType = args.provider_type
-    taskFile = os.path.join("./rally-data/", "task.yaml")
-    envFile = os.path.join(settings.RALLY_ENVS_FOLDER, f"env_{providerName}.yaml")
-    argsFile = os.path.join(
-        settings.RALLY_ARGS_FOLDER, f"args_task_{providerName}.yaml"
-    )
-    reportFile = os.path.join(
-        settings.RALLY_REPORT_FOLDER, f"report_{providerName}.json"
-    )
-
-    # Write env file
-    write_env_file(
-        path=envFile,
-        auth_url=args.auth_url,
-        region_name=args.region,
-        user=args.user,
-        password=args.password,
-        project=args.project,
-    )
-    # Write args file
-    write_args_file(
-        path=argsFile,
-        flavor_name=args.flavor_name,
-        public_net=args.public_net,
-        floating_ips_enable=args.floating_ips_enable,
-        cinder_net_id=args.cinder_net_id,
-    )
-
-    # Create OpenStack Env
-    subprocess.run(["rally", "db", "create"])
-    subprocess.run(
-        ["rally", "env", "create", "--name", providerName, "--spec", envFile]
-    )
-
-    # Check that you provide correct credentials
-    subprocess.run(["rally", "env", "check"])
-
-    # Collect key Open Stack metrics
-    subprocess.run(
-        [
-            "rally",
-            "task",
-            "start",
-            taskFile,
-            "--task-args-file",
-            argsFile,
-            "--tag",
-            providerType,
-        ]
-    )
-
-    # Generate Report
-    subprocess.run(["rally", "task", "report", "--json", "--out", reportFile])
-    message = subprocess.run(
-        ["rally", "task", "report", "--json"],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-
-    # Delete Env
-    subprocess.run(["rally", "env", "destroy", "--env", providerName])
-    subprocess.run(["rally", "env", "delete", "--env", providerName, "--force"])
-
-    # Get the report and convert to json
-    report = message.stdout
-    report_data = collect_data(report, settings.KAFKA_MSG_VERSION)
-    logger.debug(f"Collected report data: {report_data}")
-
-    # Send results to Kafka
-    if settings.KAFKA_ENABLE:
-        producer = create_kafka_producer(settings=settings, logger=logger)
-        producer.send(settings.KAFKA_TOPIC, report_data)
-        producer.flush()
-        producer.close()
-        logger.info(
-            "Message sent to topic "
-            + settings.KAFKA_TOPIC
-            + " of kafka server "
-            + settings.KAFKA_BOOTSTRAP_SERVERS
-        )
+    report_data = execute_rally(vars(args), settings=settings, logger=logger)
+    logger.info(f"Rally execution completed with report data: {report_data}")
 
 
 if __name__ == "__main__":

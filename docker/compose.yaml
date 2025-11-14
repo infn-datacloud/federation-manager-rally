@@ -1,7 +1,6 @@
 services:
   fed-mgr-rally:
-    # image: harbor.cloud.infn.it/datacloud-middleware/fed-mgr-rally:PR-1
-    image: fed-mgr-rally
+    image: harbor.cloud.infn.it/datacloud-middleware/fed-mgr-rally:python3.13
     container_name: fed-mgr-rally
     env_file:
       - ../.env
@@ -10,3 +9,44 @@ services:
       - ../environments:/app/environments
       - ../args:/app/args
       - ../reports:/app/reports
+
+  fed-mgr:
+    image: harbor.cloud.infn.it/datacloud-middleware/fed-mgr:python3.13
+    container_name: fed-mgr
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - 8000:80
+    environment:
+      DB_SCHEME: mysql+pymysql
+      DB_USER: fed-mgr
+      DB_PASSWORD: changeit
+      DB_HOST: db
+      DB_NAME: fed_mgr
+      AUTHN_MODE: local
+      TRUSTED_IDP_LIST: '["https://iam.cloud.infn.it/"]'
+      API_KEY: changeit
+      SECRET_KEY: changeit
+
+  db:
+    image: mysql:8
+    container_name: fed-mgr-db
+    restart: unless-stopped
+    ports:
+      - 3306:3306
+    volumes:
+      - db-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: changeit
+      MYSQL_DATABASE: fed_mgr
+      MYSQL_USER: fed-mgr
+      MYSQL_PASSWORD: changeit
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD}", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 50
+volumes:
+  db-data:

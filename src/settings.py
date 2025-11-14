@@ -3,6 +3,8 @@
 import logging
 from typing import Annotated
 from functools import lru_cache
+from cryptography.fernet import Fernet
+from pydantic import AfterValidator
 from enum import Enum
 from pydantic import BeforeValidator, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -124,6 +126,69 @@ class Settings(BaseSettings):
         LogLevelEnum,
         Field(default=LogLevelEnum.INFO, description="Logs level"),
         BeforeValidator(get_level),
+    ]
+    FED_MGR_API_URL: Annotated[
+        str,
+        Field(
+            default="http://localhost:8000/api/v1/",
+            description="Rest API URL of the Federation Manager",
+        ),
+    ]
+    X_API_KEY: Annotated[
+        str,
+        Field(
+            default="",
+            description="API Key to access the Federation Manager API",
+        ),
+    ]
+    API_SIZE: Annotated[
+        int,
+        Field(
+            default=5,
+            description="Number of items to retrieve per page when calling the "
+            "Federation Manager API",
+        ),
+    ]
+    API_PAGE: Annotated[
+        int,
+        Field(
+            default=1,
+            description="Page number to retrieve when calling the Federation Manager "
+            "API",
+        ),
+    ]
+    API_TIMEOUT: Annotated[
+        int,
+        Field(
+            default=15,
+            ge=1,
+            description="Timeout in seconds for Federation Manager API calls",
+        ),
+    ]
+    REQUESTED_PROVIDER_STATUS: Annotated[
+        list[str],
+        Field(
+            default=[
+                "evaluation",
+                "pre_production",
+                "active",
+                "deprecated",
+                "degraded",
+                "maintenance",
+                "re_evaluation",
+            ],
+            description="List of provider status codes allowed to run the tests",
+        ),
+    ]
+    SECRET_KEY: Annotated[
+        bytes | Fernet,
+        Field(
+            description="Secret key used to encrypt values. To generate a valid key "
+            "run the following command in shell and copy the generated output: "
+            '`python -c "from cryptography.fernet import Fernet; '
+            'print(Fernet.generate_key().decode())"`'
+        ),
+        AfterValidator(lambda x: Fernet(x) if isinstance(x, bytes) else x),
     ]
 
     model_config = SettingsConfigDict(env_file=".env")
