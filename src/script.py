@@ -36,7 +36,6 @@ def write_env_file(logger, path, auth_url, region_name, user, password, project)
     """).lstrip()
     with open(path, "w") as f:
         f.write(content)
-    logger.info(f"Wrote environment specification to {path}")
 
 
 def write_args_file(
@@ -65,7 +64,7 @@ def write_args_file(
     content = "\n".join(lines) + "\n"
     with open(path, "w") as f:
         f.write(content)
-    logger.info(f"Wrote environment specification to {path}")
+    logger.debug(f"Wrote environment specification to {path}")
 
 
 def collect_data(report, msg_version):
