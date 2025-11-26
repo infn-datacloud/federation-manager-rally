@@ -28,7 +28,6 @@ services:
       AUTHN_MODE: local
       TRUSTED_IDP_LIST: '["https://iam.cloud.infn.it/"]'
       API_KEY: changeit
-      SECRET_KEY: changeit
 
   db:
     image: mysql:8
