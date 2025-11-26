@@ -60,7 +60,7 @@ def get_project(url, headers, params, timeout, provider_id, logger):
 
 
 def decrypt(password, fernet):
-    return fernet.decrypt(password.encode()).decode()
+    return fernet.decrypt(password.encode()).decode() if fernet else password
 
 
 def run_script(settings, logger):
