@@ -75,7 +75,7 @@ def collect_data(report, provider_id, msg_version):
     record["provider_type"] = json_data["tasks"][0]["tags"][0]
     record["provider_id"] = provider_id
     record["status"] = json_data["tasks"][0]["status"]
-    record["success"] = str(json_data["tasks"][0]["pass_sla"])
+    record["success"] = json_data["tasks"][0]["pass_sla"]
     substasks = []
     for st in json_data["tasks"][0]["subtasks"]:
         wl = st["workloads"][0]
@@ -83,7 +83,7 @@ def collect_data(report, provider_id, msg_version):
             "type": type_map.get(st["title"], "unknown"),
             "title": st["title"],
             "status": st["status"],
-            "success": str(wl["pass_sla"]),
+            "success": wl["pass_sla"],
             "elapsed_time": wl["full_duration"],
             "failed_iteration_count": wl["failed_iteration_count"],
             "total_iteration_count": wl["total_iteration_count"],
