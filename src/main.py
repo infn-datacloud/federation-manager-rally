@@ -93,6 +93,7 @@ def run_script(settings, logger):
                     args={
                         "provider_name": provider["name"],
                         "provider_type": provider["type"],
+                        "provider_id": provider["id"],
                         "auth_url": provider["auth_endpoint"],
                         "region": region["name"],
                         "user": provider["rally_username"],
