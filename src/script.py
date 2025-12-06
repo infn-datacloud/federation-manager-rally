@@ -67,14 +67,15 @@ def write_args_file(
     logger.debug(f"Wrote environment specification to {path}")
 
 
-def collect_data(report, msg_version):
+def collect_data(report, provider_id, msg_version):
     json_data = json.loads(report)
     record = dict()
     record["msg_version"] = msg_version
     record["provider_name"] = json_data["tasks"][0]["env_name"]
     record["provider_type"] = json_data["tasks"][0]["tags"][0]
+    record["provider_id"] = provider_id
     record["status"] = json_data["tasks"][0]["status"]
-    record["success"] = str(json_data["tasks"][0]["pass_sla"])
+    record["success"] = json_data["tasks"][0]["pass_sla"]
     substasks = []
     for st in json_data["tasks"][0]["subtasks"]:
         wl = st["workloads"][0]
@@ -82,7 +83,7 @@ def collect_data(report, msg_version):
             "type": type_map.get(st["title"], "unknown"),
             "title": st["title"],
             "status": st["status"],
-            "success": str(wl["pass_sla"]),
+            "success": wl["pass_sla"],
             "elapsed_time": wl["full_duration"],
             "failed_iteration_count": wl["failed_iteration_count"],
             "total_iteration_count": wl["total_iteration_count"],
@@ -97,6 +98,7 @@ def execute_rally(args, settings, logger):
     logger.info(f"Starting rally execution for provider {args['provider_name']}")
     provider_name = args["provider_name"]
     provider_type = args["provider_type"]
+    provider_id = args["provider_id"]
     task_file = os.path.join("./rally-data/", "task.yaml")
     env_file = os.path.join(settings.RALLY_ENVS_FOLDER, f"env_{provider_name}.yaml")
     args_file = os.path.join(
@@ -164,7 +166,7 @@ def execute_rally(args, settings, logger):
 
     # Get the report and convert to json
     report = message.stdout
-    report_data = collect_data(report, settings.KAFKA_MSG_VERSION)
+    report_data = collect_data(report, provider_id, settings.KAFKA_MSG_VERSION)
     logger.debug(f"Collected report data: {report_data}")
 
     # Send results to Kafka
@@ -188,6 +190,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--provider_name", required=True, help="Provider name")
     parser.add_argument("--provider_type", required=True, help="Provider type")
+    parser.add_argument("--provider_id", required=True, help="Provider id")
     parser.add_argument("--auth_url", required=True, help="OpenStack Keystone URL")
     parser.add_argument("--region", required=True, help="OpenStack region name")
     parser.add_argument(
