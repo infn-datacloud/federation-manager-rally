@@ -36,6 +36,7 @@ def write_env_file(logger, path, auth_url, region_name, user, password, project)
     """).lstrip()
     with open(path, "w") as f:
         f.write(content)
+    logger.debug(f"Wrote OpenStack environment specification to {path}")
 
 
 def write_args_file(
@@ -64,7 +65,7 @@ def write_args_file(
     content = "\n".join(lines) + "\n"
     with open(path, "w") as f:
         f.write(content)
-    logger.debug(f"Wrote environment specification to {path}")
+    logger.debug(f"Wrote OpenStack args specification to {path}")
 
 
 def collect_data(report, provider_id, msg_version):
@@ -190,7 +191,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--provider_name", required=True, help="Provider name")
     parser.add_argument("--provider_type", required=True, help="Provider type")
-    parser.add_argument("--provider_id", required=True, help="Provider id")
+    parser.add_argument("--provider_id", required=True, help="Provider ID")
     parser.add_argument("--auth_url", required=True, help="OpenStack Keystone URL")
     parser.add_argument("--region", required=True, help="OpenStack region name")
     parser.add_argument(

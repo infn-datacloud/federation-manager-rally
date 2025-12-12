@@ -1,4 +1,5 @@
 import requests
+import logging
 from logger import get_logger
 from script import execute_rally
 from settings import get_settings
@@ -8,11 +9,15 @@ def get_providers(url, headers, params, timeout, logger):
     url = f"{url}providers/"
     res = requests.get(url, headers=headers, params=params, timeout=timeout)
     res.raise_for_status()
-    logger.info(
-        f"Retrieved {len(res.json()['data'])} providers from Federation Manager"
-    )
-    logger.debug(f"Providers data: {res.json()['data']}")
-    return res.json()["data"]
+    data = res.json()["data"]
+    logger.info(f"Retrieved {len(data)} providers from Federation Manager")
+    if logger.isEnabledFor(logging.DEBUG):
+        sanitized = [
+            {k: ("***" if k == "rally_password" else v) for k, v in item.items()}
+            for item in data
+        ]
+        logger.debug(f"Providers data: {sanitized}")
+    return data
 
 
 def get_regions(url, headers, params, timeout, provider_id, logger):
@@ -73,8 +78,10 @@ def run_script(settings, logger):
     }
     timeout = settings.API_TIMEOUT
     providers = get_providers(url, headers, params, timeout, logger)
+    n_test = 0
     for provider in providers:
         if provider["status_name"] in settings.REQUESTED_PROVIDER_STATUS:
+            n_test += 1
             project = get_project(url, headers, params, timeout, provider["id"], logger)
             regions = get_regions(url, headers, params, timeout, provider["id"], logger)
             for region in regions:
@@ -118,6 +125,7 @@ def run_script(settings, logger):
                     f"Rally test {'succeeded' if success else 'failed'} for provider "
                     + f"{provider['name']} in region {region['name']}"
                 )
+    logger.info(f"Number of providers where the Rally test was performed: {n_test}")
 
 
 def main():
